@@ -9,3 +9,4 @@ This is the code used by team Aries from Roseburg High School for our robot. The
 * Linear slider
 * Robot Controller for tensorFlow and Vuforia object detection
 * Motor encoders
+* Phone with camera for vuforia image recognition
