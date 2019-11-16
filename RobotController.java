@@ -12,76 +12,100 @@ public class RobotController extends LinearOpMode {
    /**
     This program was written by Brian Powell from Aries, Team 15342 for the main TeleOp program
     */
-   int speedAdjust = 8;
+   private int speedAdjust = 8;
 
    @Override
    public void runOpMode() {
-       //create variables
        ElapsedTime runtime = new ElapsedTime();
-       boolean clamped = false, isPulling = false, bChanged = false, xChanged = false, dpadLeft = false, dpadRight = false, prevLeft = false, prevRight = false;
-       //Set Up The Hardware
-       //Left back motor
-       DcMotor leftBack  = hardwareMap.get(DcMotor.class, "leftFront");
+       boolean isPulling = false, clamped = false, prevX = false, prevLeft = false, prevRight = false, prevB = false, rotated = false, prevA = false;
+       double speed, robotAngle;
+       DcMotor leftBack, rightBack, leftFront, rightFront, lift, lift2, slide;
+       Servo clamp, clamp2, rotate, rotate2, pull;
+       int rotateTimer = 0;
+
+       //wheels
+       leftBack  = hardwareMap.get(DcMotor.class, "leftBack");
        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        leftBack.setDirection(DcMotor.Direction.FORWARD);
        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
        leftBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-       //Right back motor
-       DcMotor rightBack = hardwareMap.get(DcMotor.class, "rightFront");
+       rightBack = hardwareMap.get(DcMotor.class, "rightBack");
        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        rightBack.setDirection(DcMotor.Direction.REVERSE);
        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
        rightBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-       //Left back motor
-       DcMotor leftFront  = hardwareMap.get(DcMotor.class, "leftBack");
+       leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        leftFront.setDirection(DcMotor.Direction.FORWARD);
        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
        leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-       //Right back motor
-       DcMotor rightFront = hardwareMap.get(DcMotor.class, "rightBack");
+       rightFront = hardwareMap.get(DcMotor.class, "rightFront");
        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        rightFront.setDirection(DcMotor.Direction.REVERSE);
        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
        rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-       //Linear slider
-       DcMotor lift = hardwareMap.get(DcMotor.class, "lift");
+       //linear sliders
+       lift = hardwareMap.get(DcMotor.class, "lift");
        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        lift.setDirection(DcMotor.Direction.REVERSE);
        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-       
-       DcMotor lift2 = hardwareMap.get(DcMotor.class, "lift2");
+
+       lift2 = hardwareMap.get(DcMotor.class, "lift2");
        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        lift2.setDirection(DcMotor.Direction.FORWARD);
        lift2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
        lift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-       
-       //Bigger linear slider
-       DcMotor slide2 = hardwareMap.get(DcMotor.class, "slide2");
-       slide2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-       slide2.setDirection(DcMotor.Direction.REVERSE);
-       slide2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-       slide2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-       //Servo
-       Servo clamp1 = hardwareMap.get(Servo.class, "rotate");
-       Servo clamp2 = hardwareMap.get(Servo.class, "clamp2"); //<-- oops
-       Servo pull = hardwareMap.get(Servo.class, "pull");
-       Servo rotate = hardwareMap.get(Servo.class, "clamp1");
+       //x-rail linear slider
+       slide = hardwareMap.get(DcMotor.class, "slide");
+       slide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+       slide.setDirection(DcMotor.Direction.REVERSE);
+       slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+       slide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+       //servos
+       clamp = hardwareMap.get(Servo.class, "clamp");
+       clamp2 = hardwareMap.get(Servo.class, "clamp1");
+       pull = hardwareMap.get(Servo.class, "pull");
+       rotate = hardwareMap.get(Servo.class, "rotate");
+       rotate2 = hardwareMap.get(Servo.class, "rotate2");
 
        // wait for the start button
        waitForStart();
        runtime.reset();
 
        while (opModeIsActive()) {
-           //--------------------------------------------------------------------------------------
-           // controls linear slider
-           //--------------------------------------------------------------------------------------
+           //prints the speed to the console
+           //telemetry.addData("Speed Adjust",speedAdjust);
+           telemetry.addData("encoders", leftFront.getCurrentPosition() + "," + rightFront.getCurrentPosition() + "," + rightBack.getCurrentPosition() + "," + leftBack.getCurrentPosition());
+           telemetry.update();
+
+           //controls the clamp intake
+           if(gamepad1.b && !prevB) {
+               clamp.setPosition(clamped ? 0 : 1);
+               clamp2.setPosition(clamped ? 1 : 0);
+               clamped = !clamped;
+           }
+           prevB = gamepad1.b;
+           
+           if(gamepad1.a && !prevA) {
+               rotated = !rotated;
+           }
+           
+           if(gamepad1.a || rotateTimer > 0) {
+               rotate.setPosition(rotated ? -1 : 1);
+               rotate2.setPosition(rotated ? 1 : -1);
+               if(rotateTimer > 1000) rotateTimer = 0;
+               rotateTimer++;
+           }
+           prevA = gamepad1.a;
+
+           //controls linear slider
            if(gamepad1.dpad_up && lift2.getCurrentPosition() > -800) {
                lift.setPower(-0.1);
                lift2.setPower(-0.1);
@@ -93,85 +117,62 @@ public class RobotController extends LinearOpMode {
                lift.setPower(0);
                lift2.setPower(0);
            }
-           
-           if(gamepad1.left_bumper && slide2.getCurrentPosition() < 0) {
-               if(slide2.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
-                   slide2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+           //controls x-rail extension
+           if(gamepad1.left_bumper && slide.getCurrentPosition() < 0) {
+               if(slide.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
+                   slide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                }
-               slide2.setPower(1);
+               slide.setPower(1);
            }
-           else if(gamepad1.right_bumper && slide2.getCurrentPosition() > -8800) {
-               if(slide2.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
-                   slide2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+           else if(gamepad1.right_bumper && slide.getCurrentPosition() > -8800) {
+               if(slide.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
+                   slide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                }
-               slide2.setPower(-1);
+               slide.setPower(-1);
            }
-           else if(((!gamepad1.left_bumper && !gamepad1.right_bumper) || (slide2.getCurrentPosition() > 0 || slide2.getCurrentPosition() < -8000)) && slide2.getMode() == DcMotor.RunMode.RUN_USING_ENCODER) {
-               slide2.setPower(0);
+           else if(((!gamepad1.left_bumper && !gamepad1.right_bumper) || (slide.getCurrentPosition() > 0 || slide.getCurrentPosition() < -8000)) && slide.getMode() == DcMotor.RunMode.RUN_USING_ENCODER) {
+               slide.setPower(0);
            }
-            if(!slide2.isBusy() && slide2.getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
-                slide2.setPower(0);
-               slide2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+           if(!slide.isBusy() && slide.getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
+               slide.setPower(0);
+               slide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
            }
            if(gamepad1.y) {
-               slide2.setTargetPosition(0);
-               slide2.setPower(1);
-               slide2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+               slide.setTargetPosition(0);
+               slide.setPower(1);
+               slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
            }
+
+           //controls speed adjusting
            if(gamepad1.dpad_left && !prevLeft) speedAdjust--;
            if(gamepad1.dpad_right && !prevRight) speedAdjust++;
            prevLeft = gamepad1.dpad_left;
            prevRight = gamepad1.dpad_right;
-           
-           bChanged = gamepad1.b;
-           telemetry.addData("speed adjust",speedAdjust);
-           telemetry.update();
 
-           //--------------------------------------------------------------------------------------
-           // set clip that attaches to build plate
-           //--------------------------------------------------------------------------------------
-           if(gamepad1.x && !xChanged) {
+           //sets clip that attaches to the foundation
+           if(gamepad1.x && !prevX) {
                pull.setPosition(isPulling ? 0 : 1);
                isPulling = !isPulling;
            }
-           xChanged = gamepad1.x;
+           prevX = gamepad1.x;
 
-           //--------------------------------------------------------------------------------------
-           // Uses the hypotenus of left joystick and right joystick to calculate the magnitude (speed) of the robot
-           //--------------------------------------------------------------------------------------
-          double radius = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
+           //uses the hypotenuse of left joystick and right joystick to calculate the speed of the robot
+           speed = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
 
-          //--------------------------------------------------------------------------------------
-          // Uses arc tangent (inverse tangent function) to find how we need to rotate the power of the robot in order to move in the direction we want it to
-          //--------------------------------------------------------------------------------------
-          double robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI / 4;
+           //finds the angle the robot is moving at
+           robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI / 4;
 
-          //--------------------------------------------------------------------------------------
-          // multiply the direction we need to travel in by the speed to create the power to each wheel, and also the amount that we are turning to get the power of the robot’s wheels
-          //--------------------------------------------------------------------------------------
-          leftFront.setPower(logControl(radius * Math.cos(robotAngle) - gamepad1.right_stick_x));
-          rightFront.setPower(logControl(radius * Math.sin(robotAngle) + gamepad1.right_stick_x));
-          leftBack.setPower(logControl(radius * Math.sin(robotAngle) - gamepad1.right_stick_x));
-          rightBack.setPower(logControl(radius * Math.cos(robotAngle) + gamepad1.right_stick_x));
+           //finds the percent of power to each wheel and multiplies it by the speed
+           leftFront.setPower(logControl(speed * Math.sin(robotAngle) - gamepad1.right_stick_x));
+           rightFront.setPower(logControl(speed * Math.cos(robotAngle) + gamepad1.right_stick_x));
+           leftBack.setPower(logControl(speed * Math.cos(robotAngle) - gamepad1.right_stick_x));
+           rightBack.setPower(logControl(speed * Math.sin(robotAngle) + gamepad1.right_stick_x));
        }
    }
-    private void encodersRun(DcMotor motor, DcMotor motor2, double power, int position) {
-        motor.setPower(power * constrain(position,-1,1));
-        motor2.setPower(power * constrain(position,-1,1));
-        motor.setTargetPosition(position + motor.getCurrentPosition());
-        motor2.setTargetPosition(position + motor.getCurrentPosition());
-        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        if(!motor.isBusy()) {
-            motor.setPower(0);
-            motor2.setPower(0);
-        }
-    }
+
    //squares the power for logarithmic controls
    private double logControl(double power) {
-       return ((power < 0) ? -power * power : power * power) * (speedAdjust / 10);
-   }
-   private double constrain(double value, double min, double max) {
-       return ((value > min) ? ((value < max) ? value : max) : min);
+       return ((power < 0) ? -power * power : power * power) * (speedAdjust / (double)10);
    }
 }
