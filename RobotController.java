@@ -62,7 +62,7 @@ public class RobotController extends LinearOpMode {
        lift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
        //x-rail linear slider
-       slide = hardwareMap.get(DcMotor.class, "slide");
+       slide = hardwareMap.get(DcMotor.class, "slide2");
        slide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        slide.setDirection(DcMotor.Direction.REVERSE);
        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -164,10 +164,10 @@ public class RobotController extends LinearOpMode {
            robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI / 4;
 
            //finds the percent of power to each wheel and multiplies it by the speed
-           leftFront.setPower(logControl(speed * Math.sin(robotAngle) - gamepad1.right_stick_x));
-           rightFront.setPower(logControl(speed * Math.cos(robotAngle) + gamepad1.right_stick_x));
-           leftBack.setPower(logControl(speed * Math.cos(robotAngle) - gamepad1.right_stick_x));
-           rightBack.setPower(logControl(speed * Math.sin(robotAngle) + gamepad1.right_stick_x));
+           leftFront.setPower(logControl(speed * Math.cos(robotAngle) - gamepad1.right_stick_x));
+           rightFront.setPower(logControl(speed * Math.sin(robotAngle) + gamepad1.right_stick_x));
+           leftBack.setPower(logControl(speed * Math.sin(robotAngle) - gamepad1.right_stick_x));
+           rightBack.setPower(logControl(speed * Math.cos(robotAngle) + gamepad1.right_stick_x));
        }
    }
 
