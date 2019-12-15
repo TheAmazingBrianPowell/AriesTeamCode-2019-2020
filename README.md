@@ -8,4 +8,5 @@ This is the code used by team Aries from Roseburg High School for our robot. The
 * rotating servo to attach to the foundation
 * Motor encoders
 * Phone with camera for vuforia image recognition
-* 2 Color/Distance sensors
+* 3 Color/Distance sensors
+* Two expansion hubs
