@@ -169,7 +169,6 @@ public class BlueNew extends LinearOpMode {
         
         imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
         imu2.initialize(parameters2);
-        double angle, angle2;
         
         telemetry.addData("status", "Ready");
         telemetry.update();
@@ -180,19 +179,19 @@ public class BlueNew extends LinearOpMode {
         }
         waitForStart();
         
+        
         // lift.setPower(0.3);
         // lift2.setPower(0.3);
         // sleep(800);
         // lift.setPower(0);
         // lift2.setPower(0);
-        encoderDrive(0.4,0.4,0.4,0.4,2800, 0);
+        encoderDrive(0.4,0.4,0.4,0.4,2700, 0);
         sleep(1000);
-        if (!((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible()) {
-            encoderDrive(0.5,-0.5,-0.5,0.5,800, 0);
-        } else {
+        if (!(((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible())) {
+            encoderDrive(-0.5,0.5,0.5,-0.5,800, 0);
             sleep(1000);
-            if (!((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible()) {
-                encoderDrive(0.5,-0.5,-0.5,0.5, 800, 0);
+            if (!(((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible())) {
+                encoderDrive(-0.5,0.5,0.5,-0.5, 800, 0);
             }
         }
         encoderDrive(-0.5,-0.5,-0.5,-0.5,1000,0);
@@ -224,14 +223,14 @@ public class BlueNew extends LinearOpMode {
         
         lift.setPower(-0.3);
         lift2.setPower(-0.3);
-        sleep(280);
+        sleep(320);
         lift.setPower(0);
         lift2.setPower(0);
         
         
-        encoderDrive(-0.5,-0.5,-0.5,-0.5,1800,0);
+        encoderDrive(-0.5,-0.5,-0.5,-0.5,1700,0);
         
-        // while(Math.abs((angle + angle2) / 2) > 0.01) {
+        // while(Math.abs((angle + angle2) / 2) > 0.01) 
         //     angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
         //     angle2 = imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
         //     telemetry.addData("rotation", (angle + angle2) / 2);
@@ -248,14 +247,14 @@ public class BlueNew extends LinearOpMode {
         while(opModeIsActive() && groundColor.blue() < 35) {
             double angle3 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
             double angle4 = imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
-            leftFront.setPower(0.3 - ((angle3 + angle4) / 2) / Math.PI);
-            leftBack.setPower(-0.3 - ((angle3 + angle4) / 2) / Math.PI);
-            rightFront.setPower(-0.3 + ((angle3 + angle4) / 2));
-            rightBack.setPower(0.3 + ((angle3 + angle4) / 2));
+            leftFront.setPower(0.3 - (angle3 + angle4) / 2);
+            leftBack.setPower(-0.3 - (angle3 + angle4) / 2);
+            rightFront.setPower(-0.3 + (angle3 + angle4) / 2);
+            rightBack.setPower(0.3 + (angle3 + angle4) / 2);
             idle();
         }
 
-        encoderDrive(-0.5,0.5,0.5,-0.5,4500,0);
+        encoderDrive(-0.5,0.5,0.5,-0.5,4400,0);
         
         lift.setPower(-0.3);
         lift2.setPower(-0.3);
@@ -275,7 +274,7 @@ public class BlueNew extends LinearOpMode {
         
         pull.setPosition(0);
         
-        encoderDrive(-0.3,-0.3,-0.3,-0.3,2200, -Math.PI);
+        encoderDrive(-0.3,-0.3,-0.3,-0.3,2400);
         
         pull.setPosition(1);
         sleep(1000);
@@ -293,6 +292,7 @@ public class BlueNew extends LinearOpMode {
         
         encoderDrive(0.5,0.5,0.5,0.5,3000, -Math.PI/2);
     }
+    
         private void move(double y, double x, double turn) {
             double speed = Math.hypot(y, x);
             double robotAngle = -Math.atan2(y, x) - Math.PI / 4;
@@ -328,13 +328,11 @@ public class BlueNew extends LinearOpMode {
 
             while(opModeIsActive() && leftFront.isBusy() && leftBack.isBusy() && rightFront.isBusy() && rightBack.isBusy()) {
                 double angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
-                double angle2 = imu2.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
-                leftFront.setPower(-power1 - ((angle + angle2) / 2 - runAngle) / Math.PI);
-                leftBack.setPower(-power3 - ((angle + angle2) / 2 - runAngle) / Math.PI);
-                rightFront.setPower(-power2 + ((angle + angle2) / 2 - runAngle));
-                rightBack.setPower(-power4 + ((angle + angle2) / 2 - runAngle));
-                telemetry.addData("wow",(angle + angle2) / 2 - runAngle);
-                telemetry.update();
+                leftFront.setPower(-power1 - (angle - runAngle) / Math.PI);
+                leftBack.setPower(-power3 - (angle - runAngle) / Math.PI);
+                rightFront.setPower(-power2 + (angle - runAngle) / Math.PI);
+                rightBack.setPower(-power4 + (angle - runAngle) / Math.PI);
+                idle();
             }
 
             //motors have reached their positions, set their power to zero
