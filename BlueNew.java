@@ -62,9 +62,9 @@ public class BlueNew extends LinearOpMode {
     @Override
     public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        //VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = "AbxWk0X/////AAABmbTHsmdPK0rWsHtl3bN7AfNWxaadLD6LGw0yvaK6Jk8EVl3jSPKMV/fht+xuCmYwDfcTu4T7KVtMRmLI8fezTp2sgVQ4J3/7GYGp/duLM3448Ir4ER1r4IoTPhdWXFRUS0V3F2TAgM4PT7KUd15dMOm6LqVwsOu1Msfgv7tjQuvl2Dc6k16VOE/IVcd9UK31Q9zx15cF3kVn5/y7PS+kKcOZPSUn8ghxiPVrU7x4/9QYx9HInyQ4b6rK+8+dPUkcPF2n+1EfrjXSkmCCQna2AZiTxv3ASgCOULQtYgjdGRetha6CJYOgZrT1xF+qUX+KM1s/QkyBU1tq3TC2JN6m/+zBMU+LeSx+ivhstDHnd5iP";
         parameters.cameraDirection = CAMERA_CHOICE;
@@ -170,13 +170,13 @@ public class BlueNew extends LinearOpMode {
         imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
         imu2.initialize(parameters2);
         
-        telemetry.addData("status", "Ready");
-        telemetry.update();
-        
         while (!isStopRequested() && !imu.isGyroCalibrated()) {
             sleep(50);
             idle();
         }
+        
+        telemetry.addData("status", "Ready");
+        telemetry.update();
         waitForStart();
         
         
@@ -185,16 +185,16 @@ public class BlueNew extends LinearOpMode {
         // sleep(800);
         // lift.setPower(0);
         // lift2.setPower(0);
-        encoderDrive(0.4,0.4,0.4,0.4,2700, 0);
+        encoderDrive(0.4,0.4,0.4,0.4,2200, 0);
         sleep(1000);
         if (!(((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible())) {
-            encoderDrive(-0.5,0.5,0.5,-0.5,800, 0);
+            encoderDrive(-0.5,0.5,0.5,-0.5,700, 0);
             sleep(1000);
             if (!(((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible())) {
-                encoderDrive(-0.5,0.5,0.5,-0.5, 800, 0);
+                encoderDrive(-0.5,0.5,0.5,-0.5, 700, 0);
             }
         }
-        encoderDrive(-0.5,-0.5,-0.5,-0.5,1000,0);
+        encoderDrive(-0.5,-0.5,-0.5,-0.5,700,0);
         // if (frontColor.alpha() - frontColor2.alpha() >= 40) {
         //     encoderDrive(-0.5,0.5,0.5,-0.5, 750); 
         //     encoderDrive(-0.5,-0.5,-0.5,-0.5,1000);
@@ -223,7 +223,7 @@ public class BlueNew extends LinearOpMode {
         
         lift.setPower(-0.3);
         lift2.setPower(-0.3);
-        sleep(320);
+        sleep(400);
         lift.setPower(0);
         lift2.setPower(0);
         
@@ -290,7 +290,7 @@ public class BlueNew extends LinearOpMode {
         
         encoderDrive(-0.8,-0.8,-0.8,-0.8,1000, -Math.PI/2);
         
-        encoderDrive(0.5,0.5,0.5,0.5,3000, -Math.PI/2);
+        encoderDrive(1,1,1,1,1500, -Math.PI/2);
     }
     
         private void move(double y, double x, double turn) {
