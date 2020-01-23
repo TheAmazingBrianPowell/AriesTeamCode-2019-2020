@@ -1,0 +1,23 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+@TeleOp
+
+public class NewRobotController extends LinearOpMode {
+	public void runOpMode() {
+		Bendy robot = new Bendy(hardwareMap);
+		robot.updateControllers(gamepad1, gamepad2);
+		
+		waitForStart();
+		
+		while(opModeIsActive()) {
+			robot.drive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+			if(robot.buttonToggle(gamepad1.a, robot.getGamepad(0).a, telemetry)) telemetry.addData("oof", "hi");
+			//sleep(1000);
+			//robot.updateControllers(gamepad1, gamepad2);
+			//telemetry.update();
+		}
+	}
+}
