@@ -29,30 +29,56 @@ public class Bendy {
 		}
 	}
 	
-	private void setVelocity(int index, double newVelocity, double delay) {
-		velocity[index] = Math.sinh(velocity[index]) / delay + newVelocity * (1 - Math.sinh(1) / delay);
-		if(velocity[index] > 1) velocity[index] = 1;
-		else if(velocity[index] < -1) velocity[index] = -1;
-		motors[index].setPower(velocity[index]);
+	private double constrain(double value, double min, double max) {
+		return (value < max) ? ((value > min) ? value : min) : max;
 	}
 	
+	
+	
+	/*private void setVelocity(int index, double newVelocity, Telemetry telemetry) {
+		velocity[index] = constrain(velocity[index], -1, 1);
+		if(velocity[index] < constrain(newVelocity,-1,1)) {
+			velocity[index] += 0.05;
+		}else if(velocity[index] > constrain(newVelocity,-1,1)) {
+			velocity[index] -= 0.05;
+		}
+		velocity[index] = (double)Math.round(velocity[index] * 100) / 100;
+		motors[index].setPower(velocity[index]);
+		telemetry.addData("bad", velocity[index]);
+	}*/
+	
 	public void drive(double angle, double power) {
-		setVelocity(0, power * Math.sin(Math.toRadians(angle)), 10);
-		setVelocity(1, power * Math.cos(Math.toRadians(angle)), 10);
-		setVelocity(2, power * Math.sin(Math.toRadians(angle)), 10);
-		setVelocity(3, power * Math.cos(Math.toRadians(angle)), 10);
+		motors[0].setPower(power * Math.sin(Math.toRadians(angle)));
+		motors[1].setPower(power * Math.cos(Math.toRadians(angle)));
+		motors[2].setPower(power * Math.sin(Math.toRadians(angle)));
+		motors[3].setPower(power * Math.cos(Math.toRadians(angle)));
 	}
 	
 	public void drive(double y, double x, double turn) {
 		double speed = Math.hypot(y, x);
 		double robotAngle = Math.atan2(y, x) - Math.PI / 4;
 		
-		while(Math.abs(speed * Math.sin(robotAngle - turn) < 0.05) {
-			setVelocity(0, speed * Math.sin(robotAngle) - turn, 10);
-			setVelocity(1, speed * Math.cos(robotAngle) + turn, 10);
-			setVelocity(2, speed * Math.sin(robotAngle) + turn, 10);
-			setVelocity(3, speed * Math.cos(robotAngle) - turn, 10);
+		// do {
+			motors[0].setPower(speed * Math.sin(robotAngle) - turn);
+			motors[1].setPower(speed * Math.cos(robotAngle) + turn);
+			motors[2].setPower(speed * Math.sin(robotAngle) + turn);
+			motors[3].setPower(speed * Math.cos(robotAngle) - turn);
+		// } while(Math.abs(constrain(velocity[0],-1,1) - constrain(speed * Math.sin(robotAngle) - turn,-1,1)) > 0.05 && !teleop);
+	}
+	
+	public void drive(double y, double x, double turn, int position) {
+		double robotAngle = Math.atan2(y, x) - Math.PI / 4;
+		
+		motors[0].setTargetPosition((int)(position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
+		motors[1].setTargetPosition((int)(position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
+		motors[2].setTargetPosition((int)(position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition());
+		motors[3].setTargetPosition((int)(position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition());
+		for(int i = 0; i < 4; i++) {
+			motors[i].setMode(DcMotor.RunMode.RUN_TO_POSITION);
 		}
+		drive(y,x,turn);
+		
+		while((motors[0].isBusy() || motors[1].isBusy() || motors[2].isBusy() || motors[3].isBusy()));
 	}
 	
 	public boolean toggleButton(String name, boolean button) {
@@ -62,8 +88,8 @@ public class Bendy {
 				index = i;
 			}
 		}
-		boolean prevValue = buttons[index];
-		buttons[index] = button;
-		return button && ! buttons[index];
+		boolean prevValue = prevButtons[index];
+		prevButtons[index] = button;
+		return button && ! prevButtons[index];
 	}
 }
