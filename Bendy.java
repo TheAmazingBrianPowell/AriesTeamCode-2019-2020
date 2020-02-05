@@ -46,11 +46,13 @@ public class Bendy {
 	public void drive(double y, double x, double turn) {
 		double speed = Math.hypot(y, x);
 		double robotAngle = Math.atan2(y, x) - Math.PI / 4;
-
-		setVelocity(0, speed * Math.sin(robotAngle) - turn, 10);
-		setVelocity(1, speed * Math.cos(robotAngle) + turn, 10);
-		setVelocity(2, speed * Math.sin(robotAngle) + turn, 10);
-		setVelocity(3, speed * Math.cos(robotAngle) - turn, 10);
+		
+		while(Math.abs(speed * Math.sin(robotAngle - turn) < 0.05) {
+			setVelocity(0, speed * Math.sin(robotAngle) - turn, 10);
+			setVelocity(1, speed * Math.cos(robotAngle) + turn, 10);
+			setVelocity(2, speed * Math.sin(robotAngle) + turn, 10);
+			setVelocity(3, speed * Math.cos(robotAngle) - turn, 10);
+		}
 	}
 	
 	public boolean toggleButton(String name, boolean button) {
