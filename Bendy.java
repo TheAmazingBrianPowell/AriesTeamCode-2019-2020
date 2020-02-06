@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.Hardware;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -12,14 +13,16 @@ public class Bendy {
 	private double[] velocity = {0,0,0,0,0,0,0};
 	private String[] names = {"a", "b", "x", "y"};
 	private boolean[] prevButtons = {false, false, false, false};
+	private HardwareMap map;
 	Bendy(HardwareMap hardwareMap) {
-		motors[0] = hardwareMap.get(DcMotor.class, "leftFront");
-		motors[1] = hardwareMap.get(DcMotor.class, "rightFront");
-		motors[2] = hardwareMap.get(DcMotor.class, "rightBack");
-		motors[3] = hardwareMap.get(DcMotor.class, "leftBack");
-		motors[4] = hardwareMap.get(DcMotor.class, "lift");
-		motors[5] = hardwareMap.get(DcMotor.class, "lift2");
-		motors[6] = hardwareMap.get(DcMotor.class, "slide");
+		map = hardwareMap;
+		motors[0] = map.get(DcMotor.class, "leftFront");
+		motors[1] = map.get(DcMotor.class, "rightFront");
+		motors[2] = map.get(DcMotor.class, "rightBack");
+		motors[3] = map.get(DcMotor.class, "leftBack");
+		motors[4] = map.get(DcMotor.class, "lift");
+		motors[5] = map.get(DcMotor.class, "lift2");
+		motors[6] = map.get(DcMotor.class, "slide");
 		
 		for(int i = 0; i < motors.length; i++) {
 			motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -69,16 +72,46 @@ public class Bendy {
 	public void drive(double y, double x, double turn, int position) {
 		double robotAngle = Math.atan2(y, x) - Math.PI / 4;
 		
-		motors[0].setTargetPosition((int)(position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
-		motors[1].setTargetPosition((int)(position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
-		motors[2].setTargetPosition((int)(position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition());
-		motors[3].setTargetPosition((int)(position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition());
+		motors[0].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
+		motors[1].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
+		motors[2].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition());
+		motors[3].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition());
 		for(int i = 0; i < 4; i++) {
 			motors[i].setMode(DcMotor.RunMode.RUN_TO_POSITION);
 		}
 		drive(y,x,turn);
 		
-		while((motors[0].isBusy() || motors[1].isBusy() || motors[2].isBusy() || motors[3].isBusy()));
+		// boolean[] motorsBusy = {true, true, true, true};
+		
+		// while(motorsBusy[0] || motorsBusy[1] || motorsBusy[2] || motorsBusy[3]) {
+		// 	for(int i = 0; i < 4; i++) {
+		// 		if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
+		// 	}
+		// }
+	}
+	
+	public void encoderStop() {
+		for(int i = 0; i < 4; i++) {
+			while(motors[i].isBusy());
+			motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+			motors[i].setPower(0);
+		}
+	}
+	
+	public void encoderStop(String name) {
+		DcMotor motor = map.get(DcMotor.class, name);
+		for(int i = 0; i < 4; i++) {
+			while(motors[i].isBusy());
+			motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+			motors[i].setPower(0);
+		}
+	}
+	
+	public void move(String name, double power, int position) {
+		DcMotor motor = map.get(DcMotor.class, name);
+		motor.setTargetPosition(position + motor.getCurrentPosition());
+		motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+		motor.setPower(power);
 	}
 	
 	public boolean toggleButton(String name, boolean button) {
