@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import com.qualcomm.robotcore.util.Hardware;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -14,6 +18,7 @@ public class Bendy {
 	private String[] names = {"a", "b", "x", "y"};
 	private boolean[] prevButtons = {false, false, false, false};
 	private HardwareMap map;
+	private BNO055IMU imu;
 	Bendy(HardwareMap hardwareMap) {
 		map = hardwareMap;
 		motors[0] = map.get(DcMotor.class, "leftFront");
@@ -30,11 +35,21 @@ public class Bendy {
 			motors[i].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 			motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 		}
+		
+		BNO055IMU.Parameters parameters2 = new BNO055IMU.Parameters();
+		parameters2.mode = BNO055IMU.SensorMode.IMU;
+		parameters2.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+		parameters2.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+		parameters2.loggingEnabled = false;
+		
+		imu = hardwareMap.get(BNO055IMU.class, "imu");
+		imu.initialize(parameters2);
 	}
 	
 	private double constrain(double value, double min, double max) {
 		return (value < max) ? ((value > min) ? value : min) : max;
 	}
+	
 	
 	
 	
@@ -124,5 +139,19 @@ public class Bendy {
 		boolean prevValue = prevButtons[index];
 		prevButtons[index] = button;
 		return button && ! prevButtons[index];
+	}
+	
+	public void gyroAlign(double position) {
+		double gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+		while(Math.abs(gyro - position) > 2) {
+			gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+			drive(0, 0, (gyro - position) / 180);
+		}
+	}
+	
+	public void gyroCalibrate(boolean isStopped) {
+		while (!isStopped && !imu.isGyroCalibrated()) {
+			Thread.yield();
+		}
 	}
 }
