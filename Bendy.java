@@ -228,23 +228,11 @@ public abstract class Bendy extends LinearOpMode {
 		}
 	}
 
-	public void drive(double angle, double power, int position) {
-		if(!isStopRequested()) {
-		motors[0].setTargetPosition((int)(-position * Math.sin(Math.toRadians(angle)) + motors[0].getCurrentPosition()));
-		motors[1].setTargetPosition((int)(-position * Math.cos(Math.toRadians(angle)) + motors[1].getCurrentPosition()));
-		motors[2].setTargetPosition((int)(-position * Math.sin(Math.toRadians(angle)) + motors[2].getCurrentPosition()));
-		motors[3].setTargetPosition((int)(-position * Math.cos(Math.toRadians(angle)) + motors[3].getCurrentPosition()));
-		for(int i = 0; i < 4; i++) {
-			motors[i].setMode(DcMotor.RunMode.RUN_TO_POSITION);
-		}
-		drive(angle, power);
-		}
-	}
 
 	public void encoderStop() {
-		if(!isStopRequested()) {
+		while(motors[0].isBusy() && motors[1].isBusy() && motors[2].isBusy() && motors[3].isBusy() && opModeIsActive()) idle();
+		if(!opModeIsActive()) {
 		for(int i = 0; i < 4; i++) {
-			while(motors[i].isBusy()) idle();
 			motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 			motors[i].setPower(0);
 		}
@@ -269,7 +257,7 @@ public abstract class Bendy extends LinearOpMode {
 	public void move(String name, double power, int position) {
 		if(!isStopRequested()) {
 		DcMotor motor = hardwareMap.get(DcMotor.class, name);
-		motor.setTargetPosition(position + motor.getCurrentPosition());
+		motor.setTargetPosition((int)(Math.abs(power) / power * position) + motor.getCurrentPosition());
 		motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 		motor.setPower(power);
 		}
@@ -294,9 +282,13 @@ public abstract class Bendy extends LinearOpMode {
 	public void gyroAlign(double position) {
 		if(!isStopRequested()) {
 		double gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-		while(Math.abs(gyro - position) > 2 && opModeIsActive()) {
+		while(Math.abs(gyro - position) > 4 && opModeIsActive()) {
 			gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-			drive(0, 0, (gyro - position) / 90);
+			if(Math.abs(gyro - position) < 180) {
+				drive(0, 0, (gyro - position) / 45);
+			} else {
+				drive(0, 0, (position - gyro) / 45);
+			}
 		}
 		drive(0,0,0);
 		}
