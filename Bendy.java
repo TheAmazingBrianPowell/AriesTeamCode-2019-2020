@@ -1,11 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -13,21 +11,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 import com.qualcomm.robotcore.hardware.Servo;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
@@ -44,74 +35,67 @@ public abstract class Bendy extends LinearOpMode {
 	private static boolean[] prevButtons = {false, false, false, false};
 	private static BNO055IMU imu;
 	private static boolean clamped = false;
-	
+
 	private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
 	private static final boolean PHONE_IS_PORTRAIT = false ;
-  
+
 	private static final float mmPerInch = 25.4f;
-	private static final float mmTargetHeight = (6) * mmPerInch;
-  
+
 	private static final float stoneZ = 2.00f * mmPerInch;
-  
-	private static final float halfField = 72 * mmPerInch;
-	private static final float quadField  = 36 * mmPerInch;
-  
-	private OpenGLMatrix lastLocation = null;
 	private VuforiaLocalizer vuforia = null;
-	private boolean targetVisible = false;
-	private float phoneXRotate	= 0;
-	private float phoneYRotate	= 0;
-	private float phoneZRotate	= 0;
 	private VuforiaTrackable skystone;
-	public ColorSensor groundColor;
-	
+	ColorSensor groundColor;
+
 	@Override
 	public abstract void runOpMode();
 
 	void setUp() {
 		if(!isStopRequested()) {
-		motors[0] = hardwareMap.get(DcMotor.class, "leftFront");
-		motors[1] = hardwareMap.get(DcMotor.class, "rightFront");
-		motors[2] = hardwareMap.get(DcMotor.class, "rightBack");
-		motors[3] = hardwareMap.get(DcMotor.class, "leftBack");
-		motors[4] = hardwareMap.get(DcMotor.class, "lift");
-		motors[5] = hardwareMap.get(DcMotor.class, "lift2");
-		motors[6] = hardwareMap.get(DcMotor.class, "slide");
+			motors[0] = hardwareMap.get(DcMotor.class, "leftFront");
+			motors[1] = hardwareMap.get(DcMotor.class, "rightFront");
+			motors[2] = hardwareMap.get(DcMotor.class, "rightBack");
+			motors[3] = hardwareMap.get(DcMotor.class, "leftBack");
+			motors[4] = hardwareMap.get(DcMotor.class, "lift");
+			motors[5] = hardwareMap.get(DcMotor.class, "lift2");
+			motors[6] = hardwareMap.get(DcMotor.class, "slide");
 
-		servos[0] = hardwareMap.get(Servo.class, "clamp");
-		servos[1] = hardwareMap.get(Servo.class, "clamp2");
-		servos[2] = hardwareMap.get(Servo.class, "rotate");
-		servos[3] = hardwareMap.get(Servo.class, "rotate2");
-		servos[4] = hardwareMap.get(Servo.class, "pull");
+			servos[0] = hardwareMap.get(Servo.class, "clamp");
+			servos[1] = hardwareMap.get(Servo.class, "clamp2");
+			servos[2] = hardwareMap.get(Servo.class, "rotate");
+			servos[3] = hardwareMap.get(Servo.class, "rotate2");
+			servos[4] = hardwareMap.get(Servo.class, "pull");
 		}
 
 		for(int i = 0; i < motors.length; i++) {
 			if(!isStopRequested()) {
-			motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-			if(i == 1 || i == 2) motors[i].setDirection(DcMotor.Direction.REVERSE);
-			motors[i].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-			motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+				motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+				if(i == 1 || i == 2) motors[i].setDirection(DcMotor.Direction.REVERSE);
+				motors[i].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+				motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 			} else {
 				break;
 			}
 		}
-		
-		if(!isStopRequested()) {
-		
-		BNO055IMU.Parameters parameters2 = new BNO055IMU.Parameters();
-		parameters2.mode = BNO055IMU.SensorMode.IMU;
-		parameters2.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-		parameters2.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-		parameters2.loggingEnabled = false;
 
-		imu = hardwareMap.get(BNO055IMU.class, "imu");
-		imu.initialize(parameters2);
-		
-		groundColor = hardwareMap.get(ColorSensor.class, "colorSensor");
+		if(!isStopRequested()) {
+
+			BNO055IMU.Parameters parameters2 = new BNO055IMU.Parameters();
+			parameters2.mode = BNO055IMU.SensorMode.IMU;
+			parameters2.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+			parameters2.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+			parameters2.loggingEnabled = false;
+
+			imu = hardwareMap.get(BNO055IMU.class, "imu");
+			imu.initialize(parameters2);
+
+			groundColor = hardwareMap.get(ColorSensor.class, "colorSensor");
 		}
 	}
-	
-	public void vuforiaInit() {
+
+	void vuforiaInit() {
+		float phoneXRotate	= 0;
+		float phoneYRotate;
+		float phoneZRotate	= 0;
 		int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
 		VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
@@ -123,41 +107,41 @@ public abstract class Bendy extends LinearOpMode {
 		if(!isStopRequested()) {
 			vuforia = ClassFactory.getInstance().createVuforia(parameters);
 		}
-		
+
 		VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
-		
+
 		if(!isStopRequested()) {
 
-		skystone = targetsSkyStone.get(0);
-		skystone.setName("Stone Target");
+			skystone = targetsSkyStone.get(0);
+			skystone.setName("Stone Target");
 
-		skystone.setLocation(OpenGLMatrix.translation(0, 0, stoneZ).multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
+			skystone.setLocation(OpenGLMatrix.translation(0, 0, stoneZ).multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
 		}
 		if(!isStopRequested()) {
-		if (CAMERA_CHOICE == BACK) {
-			phoneYRotate = -90;
-		} else {
-			phoneYRotate = 90;
-		}
+			if (CAMERA_CHOICE == BACK) {
+				phoneYRotate = -90;
+			} else {
+				phoneYRotate = 90;
+			}
 
-		if (PHONE_IS_PORTRAIT) {
-			phoneXRotate = 90;
-		}
-		
-		final float CAMERA_FORWARD_DISPLACEMENT = 6.0f * mmPerInch;
-		final float CAMERA_VERTICAL_DISPLACEMENT = 3.0f * mmPerInch;
-		final float CAMERA_LEFT_DISPLACEMENT = 0;
+			if (PHONE_IS_PORTRAIT) {
+				phoneXRotate = 90;
+			}
 
-		OpenGLMatrix robotFromCamera = OpenGLMatrix.translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT).multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
+			final float CAMERA_FORWARD_DISPLACEMENT = 6.0f * mmPerInch;
+			final float CAMERA_VERTICAL_DISPLACEMENT = 3.0f * mmPerInch;
+			final float CAMERA_LEFT_DISPLACEMENT = 0;
 
-		((VuforiaTrackableDefaultListener)skystone.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
-		targetsSkyStone.activate();
+			OpenGLMatrix robotFromCamera = OpenGLMatrix.translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT).multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
+
+			((VuforiaTrackableDefaultListener)skystone.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
+			targetsSkyStone.activate();
 		}
 	}
-	
-	public boolean vuforiaSkystone() {
+
+	boolean vuforiaSkystone() {
 		if(!isStopRequested()) {
-		return (((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible());
+			return (((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible());
 		} else {
 			return false;
 		}
@@ -184,65 +168,65 @@ public abstract class Bendy extends LinearOpMode {
 
 	public void drive(double angle, double power) {
 		if(!isStopRequested()) {
-		motors[0].setPower(power * Math.sin(Math.toRadians(angle)));
-		motors[1].setPower(power * Math.cos(Math.toRadians(angle)));
-		motors[2].setPower(power * Math.sin(Math.toRadians(angle)));
-		motors[3].setPower(power * Math.cos(Math.toRadians(angle)));
+			motors[0].setPower(power * Math.sin(Math.toRadians(angle)));
+			motors[1].setPower(power * Math.cos(Math.toRadians(angle)));
+			motors[2].setPower(power * Math.sin(Math.toRadians(angle)));
+			motors[3].setPower(power * Math.cos(Math.toRadians(angle)));
 		}
 	}
 
-	public void drive(double y, double x, double turn) {
+	void drive(double y, double x, double turn) {
 		if(!isStopRequested()) {
-		double speed = Math.hypot(y, x);
-		double robotAngle = Math.atan2(y, x) - Math.PI / 4;
+			double speed = Math.hypot(y, x);
+			double robotAngle = Math.atan2(y, x) - Math.PI / 4;
 
-		// do {
-		motors[0].setPower(speed * Math.sin(robotAngle) - turn);
-		motors[1].setPower(speed * Math.cos(robotAngle) + turn);
-		motors[2].setPower(speed * Math.sin(robotAngle) + turn);
-		motors[3].setPower(speed * Math.cos(robotAngle) - turn);
+			// do {
+			motors[0].setPower(speed * Math.sin(robotAngle) - turn);
+			motors[1].setPower(speed * Math.cos(robotAngle) + turn);
+			motors[2].setPower(speed * Math.sin(robotAngle) + turn);
+			motors[3].setPower(speed * Math.cos(robotAngle) - turn);
 		}
 		// } while(Math.abs(constrain(velocity[0],-1,1) - constrain(speed * Math.sin(robotAngle) - turn,-1,1)) > 0.05 && !teleop);
 	}
 
-	public void drive(double y, double x, double turn, int position) {
+	void drive(double y, double x, double turn, int position) {
 		if(!isStopRequested()) {
-		double robotAngle = Math.atan2(y, x) - Math.PI / 4;
-		double power = Math.hypot(y,x);
-		int target0 = (int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition();
-		int target1 = (int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition();
-		int target2 = (int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition();
-		int target3 = (int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition();
+			double robotAngle = Math.atan2(y, x) - Math.PI / 4;
+			double power = Math.hypot(y,x);
+			int target0 = (int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition();
+			int target1 = (int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition();
+			int target2 = (int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition();
+			int target3 = (int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition();
 
-		// motors[0].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
-		// motors[1].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
-		// motors[2].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition());
-		// motors[3].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition());
-		
-		//drive(y,x,turn);
-		
-		while(Math.abs(motors[0].getCurrentPosition() - target0) > 2 && Math.abs(motors[1].getCurrentPosition() - target1) > 2 && Math.abs(motors[2].getCurrentPosition() - target2) > 2 && Math.abs(motors[3].getCurrentPosition() - target3) > 2 && opModeIsActive()) {
-			motors[0].setPower(-(double)(motors[0].getCurrentPosition() - target0) / 500d * power);
-			motors[1].setPower(-(double)(motors[1].getCurrentPosition() - target1) / 500d * power);
-			motors[2].setPower(-(double)(motors[2].getCurrentPosition() - target2) / 500d * power);
-			motors[3].setPower(-(double)(motors[3].getCurrentPosition() - target3) / 500d * power);
-			idle();
-		}
-		drive(0,0,0);
+			// motors[0].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
+			// motors[1].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
+			// motors[2].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition());
+			// motors[3].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition());
 
-		// boolean[] motorsBusy = {true, true, true, true};
+			//drive(y,x,turn);
 
-		// while(motorsBusy[0] || motorsBusy[1] || motorsBusy[2] || motorsBusy[3]) {
-		// 	for(int i = 0; i < 4; i++) {
-		// 		if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
-		// 	}
-		// }
+			while(Math.abs(motors[0].getCurrentPosition() - target0) > 2 && Math.abs(motors[1].getCurrentPosition() - target1) > 2 && Math.abs(motors[2].getCurrentPosition() - target2) > 2 && Math.abs(motors[3].getCurrentPosition() - target3) > 2 && opModeIsActive()) {
+				motors[0].setPower(-(double)(motors[0].getCurrentPosition() - target0) / 500d * power);
+				motors[1].setPower(-(double)(motors[1].getCurrentPosition() - target1) / 500d * power);
+				motors[2].setPower(-(double)(motors[2].getCurrentPosition() - target2) / 500d * power);
+				motors[3].setPower(-(double)(motors[3].getCurrentPosition() - target3) / 500d * power);
+				idle();
+			}
+			drive(0,0,0);
+
+			// boolean[] motorsBusy = {true, true, true, true};
+
+			// while(motorsBusy[0] || motorsBusy[1] || motorsBusy[2] || motorsBusy[3]) {
+			// 	for(int i = 0; i < 4; i++) {
+			// 		if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
+			// 	}
+			// }
 		}
 	}
 
 
-	public void encoderStop() {
-		while(motors[0].isBusy() && motors[2].isBusy() && motors[2].isBusy() && motors[3].isBusy() && opModeIsActive() && motors[0].getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
+	void encoderStop() {
+		while(motors[0].isBusy() && motors[1].isBusy() && motors[2].isBusy() && motors[3].isBusy() && opModeIsActive() && motors[0].getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
 			telemetry.addData("0", motors[0].getMode() == DcMotor.RunMode.RUN_TO_POSITION);
 			telemetry.addData("1", motors[1].getMode() == DcMotor.RunMode.RUN_TO_POSITION);
 			telemetry.addData("2", motors[2].getMode() == DcMotor.RunMode.RUN_TO_POSITION);
@@ -254,83 +238,83 @@ public abstract class Bendy extends LinearOpMode {
 			telemetry.update();
 		}
 		if(!opModeIsActive()) {
-		for(int i = 0; i < 4; i++) {
-			motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-			motors[i].setPower(0);
-		}
+			for(int i = 0; i < 4; i++) {
+				motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+				motors[i].setPower(0);
+			}
 		}
 	}
 
-	public void encoderStop(String name) {
+	void encoderStop(String name) {
 		if(!isStopRequested()) {
-		DcMotor motor = hardwareMap.get(DcMotor.class, name);
-		while(motor.isBusy()) idle();
-		motor.setPower(0);
+			DcMotor motor = hardwareMap.get(DcMotor.class, name);
+			while(motor.isBusy()) idle();
+			motor.setPower(0);
 		}
 	}
-	
-	public void setPosition(String name, double position) {
+
+	void setPosition(String name, double position) {
 		if(!isStopRequested()) {
 			Servo servo = hardwareMap.get(Servo.class, name);
 			servo.setPosition(position);
 		}
 	}
 
-	public void move(String name, double power, int position) {
+	void move(String name, double power, int position) {
 		if(!isStopRequested()) {
-		DcMotor motor = hardwareMap.get(DcMotor.class, name);
-		motor.setTargetPosition((int)(Math.abs(power) / power * position) + motor.getCurrentPosition());
-		motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-		motor.setPower(power);
+			DcMotor motor = hardwareMap.get(DcMotor.class, name);
+			motor.setTargetPosition((int)(Math.abs(power) / power * position) + motor.getCurrentPosition());
+			motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+			motor.setPower(power);
 		}
 	}
 
 	public boolean toggleButton(String name, boolean button) {
 		if(!isStopRequested()) {
-		int index = 0;
-		for(int i = 0; i < names.length; i++) {
-			if(names[i].equals(name)) {
-				index = i;
+			int index = 0;
+			for(int i = 0; i < names.length; i++) {
+				if(names[i].equals(name)) {
+					index = i;
+				}
 			}
-		}
-		boolean prevValue = prevButtons[index];
-		prevButtons[index] = button;
-		return button && ! prevButtons[index];
+			boolean prevValue = prevButtons[index];
+			prevButtons[index] = button;
+			return button && ! prevButtons[index];
 		} else {
 			return false;
 		}
 	}
-	
 
-	public void gyroAlign(double position) {
+
+	void gyroAlign(double position) {
 		if(!isStopRequested()) {
-		double gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-		while(Math.abs(gyro - position) > 4 && opModeIsActive()) {
-			gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-			if(Math.abs(gyro - position) < 180) {
-				drive(0, 0, (gyro - position) / 45);
-			} else {
-				drive(0, 0, (position - gyro) / 45);
+			double gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+			while(Math.abs(gyro - position) > 4 && opModeIsActive()) {
+				gyro = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+				if(Math.abs(gyro - position) < 180) {
+					drive(0, 0, (gyro - position) / 45);
+				} else {
+					drive(0, 0, (position - gyro) / 45);
+				}
+			}
+			drive(0,0,0);
+		}
+	}
+
+	void gyroCalibrate() {
+		if(!isStopRequested()) {
+			while (!imu.isGyroCalibrated() && !isStopRequested()) {
+				sleep(20);
+				idle();
 			}
 		}
-		drive(0,0,0);
-		}
 	}
 
-	public void gyroCalibrate() {
+	void clamp() {
 		if(!isStopRequested()) {
-		while (!imu.isGyroCalibrated() && !isStopRequested()) {
-			sleep(20);
-			idle();
-		}
-		}
-	}
-
-	public void clamp() {
-		if(!isStopRequested()) {
-		servos[0].setPosition(clamped ? 1 : 0);
-		servos[1].setPosition(clamped ? 0 : 1);
-		clamped = !clamped;
+			servos[0].setPosition(clamped ? 1 : 0);
+			servos[1].setPosition(clamped ? 0 : 1);
+			clamped = !clamped;
 		}
 	}
 }
