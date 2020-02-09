@@ -225,7 +225,7 @@ public abstract class Bendy extends LinearOpMode {
 	}
 
 
-	void encoderStop() {
+	/*void encoderStop() {
 		while(motors[0].isBusy() && motors[1].isBusy() && motors[2].isBusy() && motors[3].isBusy() && opModeIsActive() && motors[0].getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
 			telemetry.addData("0", motors[0].getMode() == DcMotor.RunMode.RUN_TO_POSITION);
 			telemetry.addData("1", motors[1].getMode() == DcMotor.RunMode.RUN_TO_POSITION);
@@ -243,7 +243,7 @@ public abstract class Bendy extends LinearOpMode {
 				motors[i].setPower(0);
 			}
 		}
-	}
+	}*/
 
 	void encoderStop(String name) {
 		if(!isStopRequested()) {
