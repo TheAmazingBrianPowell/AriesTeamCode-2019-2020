@@ -194,9 +194,9 @@ public abstract class Bendy extends LinearOpMode {
 			double robotAngle = Math.atan2(y, x) - Math.PI / 4;
 			double power = Math.hypot(y,x);
 			int target0 = (int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition();
-			int target1 = (int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition();
-			int target2 = (int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition();
-			int target3 = (int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition();
+			int target1 = (int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[0].getCurrentPosition();
+			int target2 = (int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[0].getCurrentPosition();
+			int target3 = (int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition();
 
 			// motors[0].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
 			// motors[1].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
@@ -205,11 +205,11 @@ public abstract class Bendy extends LinearOpMode {
 
 			//drive(y,x,turn);
 
-			while(Math.abs(motors[0].getCurrentPosition() - target0) > 2 && Math.abs(motors[1].getCurrentPosition() - target1) > 2 && Math.abs(motors[2].getCurrentPosition() - target2) > 2 && Math.abs(motors[3].getCurrentPosition() - target3) > 2 && opModeIsActive()) {
+			while(Math.abs(motors[0].getCurrentPosition() - target0) > 2 && opModeIsActive()) {
 				motors[0].setPower(-(double)(motors[0].getCurrentPosition() - target0) / 500d * power);
-				motors[1].setPower(-(double)(motors[1].getCurrentPosition() - target1) / 500d * power);
-				motors[2].setPower(-(double)(motors[2].getCurrentPosition() - target2) / 500d * power);
-				motors[3].setPower(-(double)(motors[3].getCurrentPosition() - target3) / 500d * power);
+				motors[1].setPower(-(double)(motors[0].getCurrentPosition() - target1) / 500d * power);
+				motors[2].setPower(-(double)(motors[0].getCurrentPosition() - target2) / 500d * power);
+				motors[3].setPower(-(double)(motors[0].getCurrentPosition() - target3) / 500d * power);
 				idle();
 			}
 			drive(0,0,0);
