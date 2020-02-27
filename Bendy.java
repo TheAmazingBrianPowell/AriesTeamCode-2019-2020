@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
@@ -28,22 +30,21 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 @Disabled
 public abstract class Bendy extends LinearOpMode {
-	private static DcMotor[] motors = new DcMotor[7];
-	private static Servo[] servos = new Servo[5];
+	DcMotor[] motors = new DcMotor[7];
+	Servo[] servos = new Servo[6];
 	//private double[] velocity = {0,0,0,0,0,0,0};
-	private static String[] names = {"a", "b", "x", "y"};
-	private static boolean[] prevButtons = {false, false, false, false};
-	private static BNO055IMU imu;
-	private static boolean clamped = false;
+	private String[] names = {"a", "b", "x", "y"};
+	private boolean[] prevButtons = {false, false, false, false};
+	private BNO055IMU imu;
+	private boolean clamped = false;
 
-	private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-	private static final boolean PHONE_IS_PORTRAIT = false ;
-
-	private static final float mmPerInch = 25.4f;
-
-	private static final float stoneZ = 2.00f * mmPerInch;
-	private VuforiaLocalizer vuforia = null;
-	private VuforiaTrackable skystone;
+	private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
+	private static final String LABEL_FIRST_ELEMENT = "Stone";
+	private static final String LABEL_SECOND_ELEMENT = "Skystone";
+	private static final String VUFORIA_KEY = "AbxWk0X/////AAABmbTHsmdPK0rWsHtl3bN7AfNWxaadLD6LGw0yvaK6Jk8EVl3jSPKMV/fht+xuCmYwDfcTu4T7KVtMRmLI8fezTp2sgVQ4J3/7GYGp/duLM3448Ir4ER1r4IoTPhdWXFRUS0V3F2TAgM4PT7KUd15dMOm6LqVwsOu1Msfgv7tjQuvl2Dc6k16VOE/IVcd9UK31Q9zx15cF3kVn5/y7PS+kKcOZPSUn8ghxiPVrU7x4/9QYx9HInyQ4b6rK+8+dPUkcPF2n+1EfrjXSkmCCQna2AZiTxv3ASgCOULQtYgjdGRetha6CJYOgZrT1xF+qUX+KM1s/QkyBU1tq3TC2JN6m/+zBMU+LeSx+ivhstDHnd5iP";
+	private VuforiaLocalizer vuforia;
+	private TFObjectDetector tfod;
+	
 	ColorSensor groundColor;
 
 	@Override
@@ -64,11 +65,12 @@ public abstract class Bendy extends LinearOpMode {
 			servos[2] = hardwareMap.get(Servo.class, "rotate");
 			servos[3] = hardwareMap.get(Servo.class, "rotate2");
 			servos[4] = hardwareMap.get(Servo.class, "pull");
+			servos[5] = hardwareMap.get(Servo.class, "autoarm");
 		}
 
 		for(int i = 0; i < motors.length; i++) {
 			if(!isStopRequested()) {
-				motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+				if(i > 3) motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 				if(i == 1 || i == 2) motors[i].setDirection(DcMotor.Direction.REVERSE);
 				motors[i].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 				motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -92,7 +94,7 @@ public abstract class Bendy extends LinearOpMode {
 		}
 	}
 
-	void vuforiaInit() {
+/*	void vuforiaInit() {
 		float phoneXRotate	= 0;
 		float phoneYRotate;
 		float phoneZRotate	= 0;
@@ -103,6 +105,7 @@ public abstract class Bendy extends LinearOpMode {
 
 		parameters.vuforiaLicenseKey = "AbxWk0X/////AAABmbTHsmdPK0rWsHtl3bN7AfNWxaadLD6LGw0yvaK6Jk8EVl3jSPKMV/fht+xuCmYwDfcTu4T7KVtMRmLI8fezTp2sgVQ4J3/7GYGp/duLM3448Ir4ER1r4IoTPhdWXFRUS0V3F2TAgM4PT7KUd15dMOm6LqVwsOu1Msfgv7tjQuvl2Dc6k16VOE/IVcd9UK31Q9zx15cF3kVn5/y7PS+kKcOZPSUn8ghxiPVrU7x4/9QYx9HInyQ4b6rK+8+dPUkcPF2n+1EfrjXSkmCCQna2AZiTxv3ASgCOULQtYgjdGRetha6CJYOgZrT1xF+qUX+KM1s/QkyBU1tq3TC2JN6m/+zBMU+LeSx+ivhstDHnd5iP";
 		parameters.cameraDirection = CAMERA_CHOICE;
+		parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
 		if(!isStopRequested()) {
 			vuforia = ClassFactory.getInstance().createVuforia(parameters);
@@ -137,15 +140,32 @@ public abstract class Bendy extends LinearOpMode {
 			((VuforiaTrackableDefaultListener)skystone.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
 			targetsSkyStone.activate();
 		}
+	}*/
+	
+	void initTensorFlow() {
+		VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+		parameters.vuforiaLicenseKey = VUFORIA_KEY;
+		parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+		vuforia = ClassFactory.getInstance().createVuforia(parameters);
+		int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+		tfodParameters.minimumConfidence = 0.8;
+		tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+		tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
+		if (tfod != null) {
+			tfod.activate();
+		}
 	}
 
-	boolean vuforiaSkystone() {
+	/*boolean vuforiaSkystone() {
 		if(!isStopRequested()) {
 			return (((VuforiaTrackableDefaultListener)skystone.getListener()).isVisible());
 		} else {
 			return false;
 		}
-	}
+	}*/
 
 	private double constrain(double value, double min, double max) {
 		return (value < max) ? ((value > min) ? value : min) : max;
@@ -177,16 +197,17 @@ public abstract class Bendy extends LinearOpMode {
 
 	void drive(double y, double x, double turn) {
 		if(!isStopRequested()) {
-			double speed = Math.hypot(y, x);
-			double robotAngle = Math.atan2(y, x) - Math.PI / 4;
+			//uses the hypotenuse of left joystick and right joystick to calculate the speed of the robot
+			double speed = Math.hypot(x, y);
 
-			// do {
-			motors[0].setPower(speed * Math.sin(robotAngle) - turn);
-			motors[1].setPower(speed * Math.cos(robotAngle) + turn);
-			motors[2].setPower(speed * Math.sin(robotAngle) + turn);
-			motors[3].setPower(speed * Math.cos(robotAngle) - turn);
+			//finds the angle the robot is moving at
+			double robotAngle = Math.atan2(y, -x) - Math.PI / 4;
+			
+			motors[3].setPower(speed * Math.sin(robotAngle) - turn);
+			motors[2].setPower(speed * Math.cos(robotAngle) + turn);
+			motors[0].setPower(speed * Math.cos(robotAngle) - turn);
+			motors[1].setPower(speed * Math.sin(robotAngle) + turn);
 		}
-		// } while(Math.abs(constrain(velocity[0],-1,1) - constrain(speed * Math.sin(robotAngle) - turn,-1,1)) > 0.05 && !teleop);
 	}
 
 	void drive(double y, double x, double turn, int position) {
@@ -205,12 +226,54 @@ public abstract class Bendy extends LinearOpMode {
 
 			//drive(y,x,turn);
 
-			while(Math.abs(motors[0].getCurrentPosition() - target0) > 2 && opModeIsActive()) {
-				motors[0].setPower(-(double)(motors[0].getCurrentPosition() - target0) / 500d * power);
-				motors[1].setPower(-(double)(motors[0].getCurrentPosition() - target1) / 500d * power);
-				motors[2].setPower(-(double)(motors[0].getCurrentPosition() - target2) / 500d * power);
-				motors[3].setPower(-(double)(motors[0].getCurrentPosition() - target3) / 500d * power);
+			while(Math.abs(motors[0].getCurrentPosition() - target0) > 2 && Math.abs(motors[1].getCurrentPosition() - target1) > 2 && Math.abs(motors[2].getCurrentPosition() - target2) > 2 && Math.abs(motors[3].getCurrentPosition() - target3) > 2 && opModeIsActive()) {
+				motors[0].setPower((double)(motors[0].getCurrentPosition() - target0) / 1500d * power);
+				motors[1].setPower((double)(motors[1].getCurrentPosition() - target1) / 1500d * power);
+				motors[2].setPower((double)(motors[2].getCurrentPosition() - target2) / 1500d * power);
+				motors[3].setPower((double)(motors[3].getCurrentPosition() - target3) / 1500d * power);
 				idle();
+			}
+			drive(0,0,0);
+
+			// boolean[] motorsBusy = {true, true, true, true};
+
+			// while(motorsBusy[0] || motorsBusy[1] || motorsBusy[2] || motorsBusy[3]) {
+			// 	for(int i = 0; i < 4; i++) {
+			// 		if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
+			// 	}
+			// }
+		}
+	}
+	
+	void drive(double y, double x, double turn, int position, int runAngle) {
+		if(!isStopRequested()) {
+			double robotAngle = Math.atan2(y, x) - Math.PI / 4;
+			double power = Math.hypot(y,x);
+			int target0 = (int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition();
+			int target1 = (int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[0].getCurrentPosition();
+			int target2 = (int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[0].getCurrentPosition();
+			int target3 = (int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition();
+			// motors[0].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) - turn, -1, 1)) + motors[0].getCurrentPosition());
+			// motors[1].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) + turn, -1, 1)) + motors[1].getCurrentPosition());
+			// motors[2].setTargetPosition((int)(-position * constrain(Math.sin(robotAngle) + turn, -1, 1)) + motors[2].getCurrentPosition());
+			// motors[3].setTargetPosition((int)(-position * constrain(Math.cos(robotAngle) - turn, -1, 1)) + motors[3].getCurrentPosition());
+
+			//drive(y,x,turn);
+
+			while(Math.abs(motors[0].getCurrentPosition() - target0) > 10 && opModeIsActive()) {
+				double angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+				if(motors[0].getCurrentPosition() - target0 > 0) {
+					motors[0].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? power : Math.abs(power) / power * 0.2) * target0  - (angle - runAngle) / 180d);
+					motors[1].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? power : Math.abs(power) / power * 0.2) * target1 + (angle - runAngle) / 180d);
+					motors[2].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? power : Math.abs(power) / power * 0.2) * target2 + (angle - runAngle) / 180d);
+					motors[3].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? power : Math.abs(power) / power * 0.2) * target3 - (angle - runAngle) / 180d);
+					idle();
+				} else {
+					motors[0].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? -power : -Math.abs(power) / power * 0.2) * target0 - (angle - runAngle) / 180d);
+					motors[1].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? -power : -Math.abs(power) / power * 0.2) * target1 + (angle - runAngle) / 180d);
+					motors[2].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? -power : -Math.abs(power) / power * 0.2) * target2 + (angle - runAngle) / 180d);
+					motors[3].setPower((Math.abs(motors[0].getCurrentPosition() - target0) > 200 ? -power : -Math.abs(power) / power * 0.2) * target3 * target3 - (angle - runAngle) / 180d);
+				}
 			}
 			drive(0,0,0);
 
@@ -279,7 +342,7 @@ public abstract class Bendy extends LinearOpMode {
 			}
 			boolean prevValue = prevButtons[index];
 			prevButtons[index] = button;
-			return button && ! prevButtons[index];
+			return button && !prevValue;
 		} else {
 			return false;
 		}
