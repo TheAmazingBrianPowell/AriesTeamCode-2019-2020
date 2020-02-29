@@ -93,6 +93,7 @@ public abstract class Bendy extends LinearOpMode {
         for (int i = 0; i < motors.length; i++) {
             if (!isStopRequested()) {
                 if (i > 3) motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+		else motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                 if (i == 1 || i == 2) motors[i].setDirection(DcMotor.Direction.REVERSE);
                 motors[i].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
