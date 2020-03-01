@@ -88,11 +88,14 @@ public abstract class Bendy extends LinearOpMode {
             servos[3] = hardwareMap.get(Servo.class, "rotate2");
             servos[4] = hardwareMap.get(Servo.class, "pull");
             servos[5] = hardwareMap.get(Servo.class, "autoarm");
+            servos[6] = hardwareMap.get(Servo.class, "autoclaw1");
+            servos[7] = hardwareMap.get(Servo.class, "autoclaw2");
         }
 
         for (int i = 0; i < motors.length; i++) {
             if (!isStopRequested()) {
                 if (i > 3) motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                else motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                 if (i == 1 || i == 2) motors[i].setDirection(DcMotor.Direction.REVERSE);
                 motors[i].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 motors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -195,6 +198,7 @@ public abstract class Bendy extends LinearOpMode {
 
     /**
      * Constrains a value between the minimum and maximum limits
+     *
      * @param value A double value to be constrained
      * @param min   A double value which is the minimum limit
      * @param max   A double value which is the maximum limit
@@ -221,10 +225,11 @@ public abstract class Bendy extends LinearOpMode {
 
     /**
      * Drives the robot at an angle until stopped
+     *
      * @param angle The angle that the robot moves at. This is not the orientation of the robot.
      * @param power The power that the robot sets to the drive system. Between 1 and -1.
      */
-     void drive(double angle, double power) {
+    void drive(double angle, double power) {
         if (!isStopRequested()) {
             motors[0].setPower(power * Math.sin(Math.toRadians(angle)));
             motors[1].setPower(power * Math.cos(Math.toRadians(angle)));
@@ -236,8 +241,9 @@ public abstract class Bendy extends LinearOpMode {
     /**
      * Drives the robot at a certain degree on an x and y plane based on the power set in those
      * directions
-     * @param y The power set to the forward and backwards movement. Between 1 and -1.
-     * @param x The power set to the sideways movement. Between 1 and -1.
+     *
+     * @param y	The power set to the forward and backwards movement. Between 1 and -1.
+     * @param x	The power set to the sideways movement. Between 1 and -1.
      * @param turn The power set for the rotation of the robot. Between 1 and -1.
      */
     void drive(double y, double x, double turn) {
@@ -258,9 +264,10 @@ public abstract class Bendy extends LinearOpMode {
     /**
      * Drives on an x and y plane based on encoder units. This method will stop the motors after
      * they reach their destination for the position parameter.
-     * @param y The power set to the forward and backwards movement. Between 1 and -1.
-     * @param x The power set to the sideways movement. Between 1 and -1.
-     * @param turn The power set for the rotation of the robot. Between 1 and -1.
+     *
+     * @param y		The power set to the forward and backwards movement. Between 1 and -1.
+     * @param x		The power set to the sideways movement. Between 1 and -1.
+     * @param turn	 The power set for the rotation of the robot. Between 1 and -1.
      * @param position The position for the robot to run to. Ex. 3000 would be 3000 encoder units
      */
     void drive(double y, double x, double turn, int position) {
@@ -291,9 +298,9 @@ public abstract class Bendy extends LinearOpMode {
             // boolean[] motorsBusy = {true, true, true, true};
 
             // while(motorsBusy[0] || motorsBusy[1] || motorsBusy[2] || motorsBusy[3]) {
-            // 	for(int i = 0; i < 4; i++) {
-            // 		if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
-            // 	}
+            //	 for(int i = 0; i < 4; i++) {
+            //		 if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
+            //	 }
             // }
         }
     }
@@ -301,12 +308,13 @@ public abstract class Bendy extends LinearOpMode {
     /**
      * Drives the robot on an x and y axis, runs the robot to a position, and uses the gyro sensor
      * to keep the robot aligned to a certain rotation.
-     * @param y The power set to the forward and backwards movement. Between 1 and -1.
-     * @param x The power set to the sideways movement. Between 1 and -1.
-     * @param turn The power set for the rotation of the robot. Between 1 and -1.
+     *
+     * @param y		The power set to the forward and backwards movement. Between 1 and -1.
+     * @param x		The power set to the sideways movement. Between 1 and -1.
+     * @param turn	 The power set for the rotation of the robot. Between 1 and -1.
      * @param position The position for the robot to run to. Ex. 3000 would be 3000 encoder units
      * @param runAngle The angle, in degrees, at which the robot should remain at by using the gyro
-     *                sensor.
+     *				 sensor.
      */
     void drive(double y, double x, double turn, int position, int runAngle) {
         if (!isStopRequested()) {
@@ -343,9 +351,9 @@ public abstract class Bendy extends LinearOpMode {
             // boolean[] motorsBusy = {true, true, true, true};
 
             // while(motorsBusy[0] || motorsBusy[1] || motorsBusy[2] || motorsBusy[3]) {
-            // 	for(int i = 0; i < 4; i++) {
-            // 		if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
-            // 	}
+            //	 for(int i = 0; i < 4; i++) {
+            //		 if(motorsBusy[i]) motorsBusy[i] = motors[i].isBusy();
+            //	 }
             // }
         }
     }
@@ -373,9 +381,10 @@ public abstract class Bendy extends LinearOpMode {
 
     /**
      * sets the position of a servo
-     * @deprecated
-     * @param name The name of the servo in the configuration file.
+     *
+     * @param name	 The name of the servo in the configuration file.
      * @param position The position that the servo needs to be set to.
+     * @deprecated
      */
     void setPosition(String name, double position) {
         if (!isStopRequested()) {
@@ -386,10 +395,11 @@ public abstract class Bendy extends LinearOpMode {
 
     /**
      * moves a motor to a certain position.
-     * @see Bendy#encoderStop
-     * @param name The name of the motor in the configuration
-     * @param power The power that the motor will be set to. Between 0 and 1.
+     *
+     * @param name	 The name of the motor in the configuration
+     * @param power	The power that the motor will be set to. Between 0 and 1.
      * @param position The position that the motor will be set to.
+     * @see Bendy#encoderStop
      */
     void move(String name, double power, int position) {
         if (!isStopRequested()) {
@@ -403,8 +413,9 @@ public abstract class Bendy extends LinearOpMode {
     /**
      * Waits for a motor to reach its target position, then allows for the code to proceed. This
      * is good for having multiple movements happening at the same time.
-     * @see Bendy#move
+     *
      * @param name The name of the motor in the configuration.
+     * @see Bendy#move
      */
     void encoderStop(String name) {
         if (!isStopRequested()) {
@@ -416,12 +427,13 @@ public abstract class Bendy extends LinearOpMode {
 
     /**
      * Returns when a button has been pressed on the gamepad.
-     * @param name The name of the button
-     * @see Bendy#names
+     *
+     * @param name   The name of the button
      * @param button The button's current value
      * @return A double which shows whether or not the button has been pressed once
+     * @see Bendy#names
      */
-     boolean toggleButton(String name, boolean button) {
+    boolean toggleButton(String name, boolean button) {
         if (!isStopRequested()) {
             int index = 0;
             for (int i = 0; i < names.length; i++) {
@@ -439,6 +451,7 @@ public abstract class Bendy extends LinearOpMode {
 
     /**
      * Aligns the robot to a certain angle.
+     *
      * @param position the angle, in degrees, to have the robot run to.
      */
     void gyroAlign(double position) {
