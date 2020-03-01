@@ -242,8 +242,8 @@ public abstract class Bendy extends LinearOpMode {
      * Drives the robot at a certain degree on an x and y plane based on the power set in those
      * directions
      *
-     * @param y	The power set to the forward and backwards movement. Between 1 and -1.
-     * @param x	The power set to the sideways movement. Between 1 and -1.
+     * @param y    The power set to the forward and backwards movement. Between 1 and -1.
+     * @param x    The power set to the sideways movement. Between 1 and -1.
      * @param turn The power set for the rotation of the robot. Between 1 and -1.
      */
     void drive(double y, double x, double turn) {
@@ -265,9 +265,9 @@ public abstract class Bendy extends LinearOpMode {
      * Drives on an x and y plane based on encoder units. This method will stop the motors after
      * they reach their destination for the position parameter.
      *
-     * @param y		The power set to the forward and backwards movement. Between 1 and -1.
-     * @param x		The power set to the sideways movement. Between 1 and -1.
-     * @param turn	 The power set for the rotation of the robot. Between 1 and -1.
+     * @param y        The power set to the forward and backwards movement. Between 1 and -1.
+     * @param x        The power set to the sideways movement. Between 1 and -1.
+     * @param turn     The power set for the rotation of the robot. Between 1 and -1.
      * @param position The position for the robot to run to. Ex. 3000 would be 3000 encoder units
      */
     void drive(double y, double x, double turn, int position) {
@@ -309,12 +309,12 @@ public abstract class Bendy extends LinearOpMode {
      * Drives the robot on an x and y axis, runs the robot to a position, and uses the gyro sensor
      * to keep the robot aligned to a certain rotation.
      *
-     * @param y		The power set to the forward and backwards movement. Between 1 and -1.
-     * @param x		The power set to the sideways movement. Between 1 and -1.
-     * @param turn	 The power set for the rotation of the robot. Between 1 and -1.
+     * @param y        The power set to the forward and backwards movement. Between 1 and -1.
+     * @param x        The power set to the sideways movement. Between 1 and -1.
+     * @param turn     The power set for the rotation of the robot. Between 1 and -1.
      * @param position The position for the robot to run to. Ex. 3000 would be 3000 encoder units
      * @param runAngle The angle, in degrees, at which the robot should remain at by using the gyro
-     *				 sensor.
+     *                 sensor.
      */
     void drive(double y, double x, double turn, int position, int runAngle) {
         if (!isStopRequested()) {
@@ -382,7 +382,7 @@ public abstract class Bendy extends LinearOpMode {
     /**
      * sets the position of a servo
      *
-     * @param name	 The name of the servo in the configuration file.
+     * @param name     The name of the servo in the configuration file.
      * @param position The position that the servo needs to be set to.
      * @deprecated
      */
@@ -396,8 +396,8 @@ public abstract class Bendy extends LinearOpMode {
     /**
      * moves a motor to a certain position.
      *
-     * @param name	 The name of the motor in the configuration
-     * @param power	The power that the motor will be set to. Between 0 and 1.
+     * @param name     The name of the motor in the configuration
+     * @param power    The power that the motor will be set to. Between 0 and 1.
      * @param position The position that the motor will be set to.
      * @see Bendy#encoderStop
      */
